@@ -20,20 +20,26 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
+      - name: Sanitize Docker Username
+        run: |
+          # Remove newlines and carriage returns from the secret
+          CLEAN_USERNAME=$(echo "${{ secrets.DOCKER_USERNAME }}" | tr -d '\n\r')
+          echo "DOCKER_USERNAME=$CLEAN_USERNAME" >> $GITHUB_ENV
+
       # BACKEND IMAGE
       - name: Build Backend Image
         run: |
-          docker build -f backend/Dockerfile -t "${{ secrets.DOCKER_USERNAME }}/starter-backend:latest" backend/
+          docker build -f backend/Dockerfile -t "${{ env.DOCKER_USERNAME }}/starter-backend:latest" backend/
 
       - name: Push Backend Image
         run: |
-          docker push "${{ secrets.DOCKER_USERNAME }}/starter-backend:latest"
+          docker push "${{ env.DOCKER_USERNAME }}/starter-backend:latest"
 
       # FRONTEND IMAGE
       - name: Build Frontend Image
         run: |
-          docker build -f frontend/Dockerfile -t "${{ secrets.DOCKER_USERNAME }}/starter-frontend:latest" frontend/
+          docker build -f frontend/Dockerfile -t "${{ env.DOCKER_USERNAME }}/starter-frontend:latest" frontend/
 
       - name: Push Frontend Image
         run: |
-          docker push "${{ secrets.DOCKER_USERNAME }}/starter-frontend:latest"
+          docker push "${{ env.DOCKER_USERNAME }}/starter-frontend:latest"
