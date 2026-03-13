@@ -1,0 +1,64 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: starter-mysql
+    restart: unless-stopped
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-Realme6G90T}
+      MYSQL_DATABASE: starter_db
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - starter_network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: venkatesh0768/backend:latest
+    container_name: starter-backend
+    restart: unless-stopped
+    ports:
+      - "5000:5000" # Backend runs on 5000 inside container (set by application-prod.yml)
+    env_file:
+      - ./backend/.env
+    environment:
+      - DB_URL=jdbc:mysql://mysql:3306/starter_db?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC
+      - SPRING_PROFILES_ACTIVE=prod
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - starter_network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    image: venkatesh0768/frontend:latest
+    container_name: starter-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./frontend/.env.local
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:5000
+    depends_on:
+      - backend
+    networks:
+      - starter_network
+
+networks:
+  starter_network:
+    driver: bridge
+
+volumes:
+  mysql_data:
